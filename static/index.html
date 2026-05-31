@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Chatbot - Ambient Assistant</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #0f0c1b 0%, #15102a 50%, #06040d 100%);
+            --glass-bg: rgba(25, 20, 45, 0.45);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --accent-glow: rgba(138, 43, 226, 0.6);
+            --accent-purple: #9d4edd;
+            --accent-cyan: #240046;
+            --text-primary: #f3f0fc;
+            --text-secondary: #a49fc6;
+            --speaker-0: #f72585;
+            --speaker-1: #4cc9f0;
+            --speaker-unknown: #7209b7;
+            --assistant-color: #3f37c9;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+        }
+
+        .app-container {
+            width: 90%;
+            max-width: 1000px;
+            height: 85vh;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Ambient glowing spheres in background */
+        .ambient-sphere {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            z-index: -1;
+            opacity: 0.15;
+        }
+        .sphere-1 {
+            width: 300px;
+            height: 300px;
+            background: #7209b7;
+            top: -10%;
+            left: -10%;
+        }
+        .sphere-2 {
+            width: 400px;
+            height: 400px;
+            background: #4cc9f0;
+            bottom: -15%;
+            right: -10%;
+        }
+
+        /* Header bar */
+        header {
+            padding: 20px 30px;
+            border-bottom: 1px solid var(--glass-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.15);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand i {
+            font-size: 24px;
+            color: var(--accent-purple);
+            text-shadow: 0 0 10px var(--accent-glow);
+        }
+
+        .brand h1 {
+            font-size: 20px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .btn-icon {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .btn-icon:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Dialogue Box area */
+        .chat-area {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            scroll-behavior: smooth;
+        }
+
+        /* Scrollbar custom styling */
+        .chat-area::-webkit-scrollbar {
+            width: 6px;
+        }
+        .chat-area::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .chat-area::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+        .chat-area::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Message Turn Styles */
+        .message-turn {
+            display: flex;
+            flex-direction: column;
+            max-width: 75%;
+            animation: fadeIn 0.4s ease forwards;
+        }
+
+        .message-turn.user {
+            align-self: flex-start;
+        }
+
+        .message-turn.assistant {
+            align-self: flex-end;
+            align-items: flex-end;
+        }
+
+        .speaker-label {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 5px;
+            margin-left: 12px;
+        }
+
+        .message-turn.assistant .speaker-label {
+            margin-left: 0;
+            margin-right: 12px;
+        }
+
+        .bubble {
+            padding: 14px 18px;
+            border-radius: 16px;
+            line-height: 1.5;
+            font-size: 15px;
+            position: relative;
+        }
+
+        /* Dynamic color highlights for different speakers */
+        .user[data-speaker="SPEAKER_00"] .bubble {
+            background: rgba(247, 37, 133, 0.15);
+            border: 1px solid rgba(247, 37, 133, 0.3);
+            border-top-left-radius: 2px;
+        }
+        .user[data-speaker="SPEAKER_00"] .speaker-label {
+            color: var(--speaker-0);
+        }
+
+        .user[data-speaker="SPEAKER_01"] .bubble {
+            background: rgba(76, 201, 240, 0.15);
+            border: 1px solid rgba(76, 201, 240, 0.3);
+            border-top-left-radius: 2px;
+        }
+        .user[data-speaker="SPEAKER_01"] .speaker-label {
+            color: var(--speaker-1);
+        }
+
+        .user[data-speaker="Speaker Unknown"] .bubble,
+        .user[data-speaker="Speaker"] .bubble {
+            background: rgba(114, 9, 183, 0.15);
+            border: 1px solid rgba(114, 9, 183, 0.3);
+            border-top-left-radius: 2px;
+        }
+        .user[data-speaker="Speaker Unknown"] .speaker-label,
+        .user[data-speaker="Speaker"] .speaker-label {
+            color: var(--text-secondary);
+        }
+
+        .assistant .bubble {
+            background: rgba(157, 78, 221, 0.2);
+            border: 1px solid rgba(157, 78, 221, 0.4);
+            border-top-right-radius: 2px;
+            color: var(--text-primary);
+            box-shadow: 0 0 15px rgba(157, 78, 221, 0.1);
+        }
+        .assistant .speaker-label {
+            color: var(--accent-purple);
+        }
+
+        /* Combined Multi-turn container */
+        .multi-turn-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 100%;
+        }
+
+        /* Interactive Footer Controls */
+        footer {
+            padding: 30px;
+            border-top: 1px solid var(--glass-border);
+            background: rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            position: relative;
+        }
+
+        .mic-container {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .btn-mic {
+            background: linear-gradient(135deg, #7209b7 0%, #9d4edd 100%);
+            border: none;
+            color: white;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 28px;
+            box-shadow: 0 0 20px var(--accent-glow);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 2;
+        }
+
+        .btn-mic:hover {
+            transform: scale(1.08);
+            box-shadow: 0 0 30px var(--accent-purple);
+        }
+
+        .btn-mic.recording {
+            background: linear-gradient(135deg, #f72585 0%, #ff5c8a 100%);
+            animation: pulseRecord 1.5s infinite;
+        }
+
+        /* Visualizer waves expanding out from mic */
+        .pulse-wave {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: rgba(157, 78, 221, 0.4);
+            z-index: 1;
+            transition: all 0.3s ease;
+        }
+
+        .btn-mic.recording ~ .pulse-wave-1 {
+            animation: waveOut 2s infinite ease-out;
+        }
+        .btn-mic.recording ~ .pulse-wave-2 {
+            animation: waveOut 2s infinite ease-out 1s;
+        }
+
+        .status-text {
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            text-align: center;
+            height: 20px;
+        }
+
+        /* Settings Slide Panel */
+        .settings-panel {
+            position: absolute;
+            top: 80px;
+            right: 30px;
+            width: 280px;
+            background: rgba(18, 14, 34, 0.95);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            z-index: 10;
+            display: none;
+            flex-direction: column;
+            gap: 15px;
+            animation: slideDown 0.3s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
+        }
+
+        .setting-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .setting-group label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .setting-group input, 
+        .setting-group select {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            padding: 8px 12px;
+            color: var(--text-primary);
+            font-size: 14px;
+            outline: none;
+            transition: border 0.3s ease;
+        }
+
+        .setting-group input:focus, 
+        .setting-group select:focus {
+            border-color: var(--accent-purple);
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulseRecord {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(247, 37, 133, 0.7); }
+            70% { transform: scale(1.05); box-shadow: 0 0 0 15px rgba(247, 37, 133, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(247, 37, 133, 0); }
+        }
+
+        @keyframes waveOut {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(2.2); opacity: 0; }
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Utility classes */
+        .typing-dots {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            height: 20px;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            background: var(--text-secondary);
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+
+        .dot:nth-child(1) { animation-delay: -0.32s; }
+        .dot:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1.0); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="ambient-sphere sphere-1"></div>
+    <div class="ambient-sphere sphere-2"></div>
+
+    <div class="app-container">
+        
+        <!-- Header Section -->
+        <header>
+            <div class="brand">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                <h1>Ambient Voice Assistant</h1>
+            </div>
+            <div class="controls">
+                <button class="btn-icon" id="btn-clear" title="Clear Session"><i class="fa-solid fa-rotate-left"></i></button>
+                <button class="btn-icon" id="btn-settings" title="Settings"><i class="fa-solid fa-sliders"></i></button>
+            </div>
+        </header>
+
+        <!-- Settings Slide Panel -->
+        <div class="settings-panel" id="settings-panel">
+            <div class="setting-group">
+                <label for="session-id">Session ID</label>
+                <input type="text" id="session-id" value="default_session">
+            </div>
+            <div class="setting-group">
+                <label for="tts-voice">TTS Assistant Voice</label>
+                <select id="tts-voice">
+                    <!-- Loaded dynamically via JS -->
+                    <option value="">Default Browser Voice</option>
+                </select>
+            </div>
+            <div class="setting-group">
+                <label for="tts-rate">Speaking Speed</label>
+                <input type="range" id="tts-rate" min="0.5" max="2" step="0.1" value="1.0">
+            </div>
+        </div>
+
+        <!-- Chat Area (Scrollable dialogue list) -->
+        <main class="chat-area" id="chat-area">
+            <!-- Dynamic message turns inserted here -->
+            <div class="message-turn assistant">
+                <div class="speaker-label">Voice Assistant</div>
+                <div class="bubble">
+                    Hello! I am ready to transcribe, separate speakers, and chat with you. Tap the microphone below to start speaking.
+                </div>
+            </div>
+        </main>
+
+        <!-- Recording & Control Bar -->
+        <footer>
+            <div class="status-text" id="status-text">Click the microphone to start talking</div>
+            
+            <div class="mic-container">
+                <button class="btn-mic" id="btn-mic">
+                    <i class="fa-solid fa-microphone" id="mic-icon"></i>
+                </button>
+                <div class="pulse-wave pulse-wave-1"></div>
+                <div class="pulse-wave pulse-wave-2"></div>
+            </div>
+        </footer>
+
+    </div>
+
+    <script>
+        const btnMic = document.getElementById('btn-mic');
+        const micIcon = document.getElementById('mic-icon');
+        const statusText = document.getElementById('status-text');
+        const chatArea = document.getElementById('chat-area');
+        const btnSettings = document.getElementById('btn-settings');
+        const settingsPanel = document.getElementById('settings-panel');
+        const btnClear = document.getElementById('btn-clear');
+        const inputSessionId = document.getElementById('session-id');
+        const selectTtsVoice = document.getElementById('tts-voice');
+        const inputTtsRate = document.getElementById('tts-rate');
+
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let isRecording = false;
+        let voicesList = [];
+
+        // 1. Initialize browser speech synthesis voices
+        function populateVoices() {
+            if (typeof speechSynthesis === 'undefined') return;
+            voicesList = speechSynthesis.getVoices();
+            selectTtsVoice.innerHTML = '<option value="">Default Browser Voice</option>';
+            
+            voicesList.forEach((voice, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = `${voice.name} (${voice.lang})`;
+                // Select English or local voice as preferred default if possible
+                if (voice.name.includes("Google") || voice.lang.startsWith("en-")) {
+                    option.selected = true;
+                }
+                selectTtsVoice.appendChild(option);
+            });
+        }
+        populateVoices();
+        if (typeof speechSynthesis !== 'undefined' && speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = populateVoices;
+        }
+
+        // Toggle settings panel
+        btnSettings.addEventListener('click', () => {
+            const isDisplayed = settingsPanel.style.display === 'flex';
+            settingsPanel.style.display = isDisplayed ? 'none' : 'flex';
+        });
+
+        // 2. Microphone capture logic with hardware cancellation & suppression
+        async function startRecording() {
+            try {
+                audioChunks = [];
+                // Enable audio constraints for noise cancellation
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        autoGainControl: true,
+                        channelCount: 1,
+                        sampleRate: 16000
+                    }
+                });
+
+                // WebM container is natively supported by browsers and accepted by Whisper API
+                mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+                
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data.size > 0) {
+                        audioChunks.push(event.data);
+                    }
+                };
+
+                mediaRecorder.onstop = async () => {
+                    // Turn off active mic track icons
+                    stream.getTracks().forEach(track => track.stop());
+                    
+                    // Create audio blob
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                    await uploadAudio(audioBlob);
+                };
+
+                mediaRecorder.start();
+                isRecording = true;
+                btnMic.classList.add('recording');
+                micIcon.className = "fa-solid fa-square"; // stop icon
+                statusText.textContent = "Listening... Tap to finish.";
+            } catch (err) {
+                console.error("Mic access denied or error:", err);
+                statusText.textContent = "Error: Microphone access denied.";
+            }
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && isRecording) {
+                mediaRecorder.stop();
+                isRecording = false;
+                btnMic.classList.remove('recording');
+                micIcon.className = "fa-solid fa-microphone";
+                statusText.textContent = "Processing audio...";
+            }
+        }
+
+        // Mic Click handler
+        btnMic.addEventListener('click', () => {
+            // Cancel speech if assistant is speaking
+            if (typeof speechSynthesis !== 'undefined' && speechSynthesis.speaking) {
+                speechSynthesis.cancel();
+            }
+
+            if (!isRecording) {
+                startRecording();
+            } else {
+                stopRecording();
+            }
+        });
+
+        // 3. Audio upload and server communications
+        async function uploadAudio(audioBlob) {
+            // Create typing dot indicator representing processing state
+            const tempResponseTurn = createTypingTurn();
+            chatArea.appendChild(tempResponseTurn);
+            scrollToBottom();
+
+            const sessionId = inputSessionId.value || "default_session";
+            const formData = new FormData();
+            formData.append("audio", audioBlob, "audio.webm");
+            formData.append("session_id", sessionId);
+
+            try {
+                const response = await fetch("/api/chat-voice", {
+                    method: "POST",
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(errData.detail || "Server error occurred");
+                }
+
+                const data = await response.json();
+                
+                // Remove typing loading turn
+                tempResponseTurn.remove();
+
+                // Append user transcribed dialogue lines
+                if (data.aligned_dialogue && data.aligned_dialogue.length > 0) {
+                    appendUserDialogue(data.aligned_dialogue);
+                } else {
+                    appendSystemMessage("No speech was detected. Please check your mic inputs.");
+                }
+
+                // Append assistant reply bubble
+                if (data.response) {
+                    appendAssistantReply(data.response);
+                    speakText(data.response);
+                }
+
+            } catch (error) {
+                console.error("Upload error:", error);
+                tempResponseTurn.remove();
+                appendSystemMessage("Error: " + error.message);
+                statusText.textContent = "Processing failed.";
+            }
+        }
+
+        // 4. Text-To-Speech response delivery
+        function speakText(text) {
+            if (typeof speechSynthesis === 'undefined') return;
+            
+            // Stop any ongoing speech
+            speechSynthesis.cancel();
+            
+            const utterance = new SpeechSynthesisUtterance(text);
+            const voiceIndex = selectTtsVoice.value;
+            
+            if (voiceIndex !== "") {
+                utterance.voice = voicesList[voiceIndex];
+            }
+            
+            utterance.rate = parseFloat(inputTtsRate.value) || 1.0;
+            
+            utterance.onstart = () => {
+                statusText.textContent = "Speaking...";
+            };
+            
+            utterance.onend = () => {
+                statusText.textContent = "Click the microphone to start talking";
+            };
+
+            speechSynthesis.speak(utterance);
+        }
+
+        // 5. DOM Mutation Helpers
+        function createTypingTurn() {
+            const turn = document.createElement('div');
+            turn.className = "message-turn assistant";
+            turn.innerHTML = `
+                <div class="speaker-label">Voice Assistant</div>
+                <div class="bubble">
+                    <div class="typing-dots">
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                    </div>
+                </div>
+            `;
+            return turn;
+        }
+
+        function appendUserDialogue(alignedDialogue) {
+            const container = document.createElement('div');
+            container.className = "multi-turn-container";
+
+            alignedDialogue.forEach(turn => {
+                const turnDiv = document.createElement('div');
+                turnDiv.className = "message-turn user";
+                turnDiv.setAttribute('data-speaker', turn.speaker);
+                turnDiv.innerHTML = `
+                    <div class="speaker-label">${turn.speaker}</div>
+                    <div class="bubble">${turn.text}</div>
+                `;
+                container.appendChild(turnDiv);
+            });
+
+            chatArea.appendChild(container);
+            scrollToBottom();
+        }
+
+        function appendAssistantReply(text) {
+            const turn = document.createElement('div');
+            turn.className = "message-turn assistant";
+            turn.innerHTML = `
+                <div class="speaker-label">Voice Assistant</div>
+                <div class="bubble">${text}</div>
+            `;
+            chatArea.appendChild(turn);
+            scrollToBottom();
+        }
+
+        function appendSystemMessage(text) {
+            const turn = document.createElement('div');
+            turn.className = "message-turn";
+            turn.style.alignSelf = "center";
+            turn.innerHTML = `
+                <div class="bubble" style="background: rgba(255, 0, 0, 0.08); border: 1px solid rgba(255,0,0,0.2); font-size: 13px; color: #ff8b8b; text-align: center;">
+                    ${text}
+                </div>
+            `;
+            chatArea.appendChild(turn);
+            scrollToBottom();
+        }
+
+        function scrollToBottom() {
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        // Clear Session click
+        btnClear.addEventListener('click', async () => {
+            const sessionId = inputSessionId.value || "default_session";
+            const formData = new FormData();
+            formData.append("session_id", sessionId);
+
+            try {
+                const response = await fetch("/api/clear-session", {
+                    method: "POST",
+                    body: formData
+                });
+                const resData = await response.json();
+                
+                chatArea.innerHTML = `
+                    <div class="message-turn assistant">
+                        <div class="speaker-label">Voice Assistant</div>
+                        <div class="bubble">
+                            Conversation history cleared. Let's start fresh!
+                        </div>
+                    </div>
+                `;
+                statusText.textContent = "Chat session history reset.";
+            } catch (err) {
+                console.error("Failed to clear session:", err);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,32 @@
+# Virtual Environment
+venv/
+.venv/
+env/
+
+# API keys and secrets (CRITICAL FOR SECURITY)
+.env
+
+# Python byte-compilation / cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Temporary voice / audio recordings
+*.wav
+*.webm
+*.mp3
+voice_*
+
+# IDE / Editor configuration
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# OS System Files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
