@@ -4,11 +4,13 @@ import tempfile
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from dotenv import load_dotenv
 
 # Load env variables from .env file
-load_dotenv()
+# Use explicit path so the app works regardless of CWD
+_project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+load_dotenv(os.path.join(_project_root, ".env"))
 
 # Initialize Chatbot Engine
 from app.chat_engine import ChatbotEngine

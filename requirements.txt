@@ -6,4 +6,5 @@ langchain
 langchain-google-genai
 openai
 pyannote.audio
+torchcodec
 faster-whisper

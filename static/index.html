@@ -700,10 +700,17 @@
                 const turnDiv = document.createElement('div');
                 turnDiv.className = "message-turn user";
                 turnDiv.setAttribute('data-speaker', turn.speaker);
-                turnDiv.innerHTML = `
-                    <div class="speaker-label">${turn.speaker}</div>
-                    <div class="bubble">${turn.text}</div>
-                `;
+
+                const label = document.createElement('div');
+                label.className = 'speaker-label';
+                label.textContent = turn.speaker;
+
+                const bubble = document.createElement('div');
+                bubble.className = 'bubble';
+                bubble.textContent = turn.text;
+
+                turnDiv.appendChild(label);
+                turnDiv.appendChild(bubble);
                 container.appendChild(turnDiv);
             });
 
@@ -714,10 +721,17 @@
         function appendAssistantReply(text) {
             const turn = document.createElement('div');
             turn.className = "message-turn assistant";
-            turn.innerHTML = `
-                <div class="speaker-label">Voice Assistant</div>
-                <div class="bubble">${text}</div>
-            `;
+
+            const label = document.createElement('div');
+            label.className = 'speaker-label';
+            label.textContent = 'Voice Assistant';
+
+            const bubble = document.createElement('div');
+            bubble.className = 'bubble';
+            bubble.textContent = text;
+
+            turn.appendChild(label);
+            turn.appendChild(bubble);
             chatArea.appendChild(turn);
             scrollToBottom();
         }
@@ -726,11 +740,13 @@
             const turn = document.createElement('div');
             turn.className = "message-turn";
             turn.style.alignSelf = "center";
-            turn.innerHTML = `
-                <div class="bubble" style="background: rgba(255, 0, 0, 0.08); border: 1px solid rgba(255,0,0,0.2); font-size: 13px; color: #ff8b8b; text-align: center;">
-                    ${text}
-                </div>
-            `;
+
+            const bubble = document.createElement('div');
+            bubble.className = 'bubble';
+            bubble.style.cssText = 'background: rgba(255, 0, 0, 0.08); border: 1px solid rgba(255,0,0,0.2); font-size: 13px; color: #ff8b8b; text-align: center;';
+            bubble.textContent = text;
+
+            turn.appendChild(bubble);
             chatArea.appendChild(turn);
             scrollToBottom();
         }

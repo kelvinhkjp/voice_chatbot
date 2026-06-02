@@ -6,11 +6,11 @@ from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 
 class ChatbotEngine:
     def __init__(self):
-        # We use gemini-1.5-flash by default as it is super fast and low-latency.
+        # We use gemini-2.5-flash by default as it is super fast and low-latency.
         # Alternatively, we can use gemini-2.5-flash or gemini-3.5-flash depending on availability.
         # It reads GEMINI_API_KEY automatically from the environment.
         self.llm = ChatGoogleGenerativeAI(
-            model="gemini-1.5-flash",
+            model="gemini-2.5-flash",
             temperature=0.7,
             streaming=True
         )
