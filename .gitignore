@@ -2,6 +2,11 @@
 venv/
 .venv/
 env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
 
 # API keys and secrets (CRITICAL FOR SECURITY)
 .env
@@ -15,7 +20,6 @@ __pycache__/
 *.wav
 *.webm
 *.mp3
-voice_*
 
 # IDE / Editor configuration
 .vscode/
@@ -25,6 +29,9 @@ voice_*
 *.njsproj
 *.sln
 *.swp
+
+# Huggingface cache
+.cache/
 
 # OS System Files
 Thumbs.db
